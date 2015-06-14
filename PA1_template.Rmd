@@ -7,6 +7,7 @@ author: Ossi Bister
 library("ggplot2")
 library("doBy")
 library("scales")
+library("plyr")
 ```
 
 We read the data using *readCsv()* method and calculate the number of steps
@@ -27,14 +28,18 @@ Histogram of the total number of steps taken each day ignoring missing values
 stepSummaryData$date <- as.POSIXct(stepSummaryData$date)
  ggplot(data = stepSummaryData,aes(x=date,y=steps.sum))+geom_histogram(stat="identity")+scale_x_datetime(breaks = date_breaks("1 weeks"),                                                                                labels = date_format("%d/%m"))+ggtitle("Total number of steps by day\n at time period 01.10.2013-30.11.2013")
 ```
+
+
 Mean and median of the total number of steps taken per day
 
 ```{r}
-meanSteps <- mean(stepSummaryData$steps.sum)
-meadianSteps <- median(stepSummaryData$steps.sum)
+paste("mean steps",mean(stepSummaryData$steps.sum))
+paste("median steps",median(stepSummaryData$steps.sum))
 ```
 
 Next we calculate average step count by interval
+
+
 ```{r}
 stepIntervalMean <- summaryBy(steps~interval,data = activityDataCleaned,FUN = mean)
 ```
@@ -48,5 +53,28 @@ stepIntervalMean$fiveMinutes <- fiveMinuteInterval
 ```
 and finally plot the results
 ```{r}
- ggplot(data = stepIntervalMean,aes(x=fiveMinutes,y=steps.mean))+geom_line()
+ ggplot(data = stepIntervalMean,aes(x=fiveMinutes,y=steps.mean))+geom_line()+
+   scale_x_continuous(label=function(x){return(paste("", x%/%60, "h", x%%60))})+ggtitle("Activity during date")+xlab("Hour")
+```
+
+
+Next we replace original data frames missing values by average step value
+```{r}
+totalWithMissingAndAvg <- merge(activityData,stepIntervalMean,by="interval")
+finalFilledData <- within(totalWithMissingAndAvg,
+             steps <- ifelse(!is.na(steps),steps,steps.mean)
+)
+```
+... and summarize and plot the results
+```{r}
+stepSummaryDataFinal <- summaryBy(steps~date,data =finalFilledData ,FUN = sum)
+stepSummaryDataFinal$date = as.POSIXct(stepSummaryDataFinal$date)
+ggplot(data = stepSummaryDataFinal,aes(x=date,y=steps.sum))+geom_histogram(stat="identity")+scale_x_datetime(breaks = date_breaks("1 weeks"),                                                                                labels = date_format("%d/%m"))+ggtitle("Total number of steps by day\n at time period 01.10.2013-30.11.2012")
+mean(stepSummaryDataFinal$steps.sum)
+```
+Next we plot to panels to demonstrate differences between weekend and weekday activity 
+```{r}
+stepSummaryDataFinal$weekday <- weekdays(as.Date(stepSummaryDataFinal$date))
+stepSummaryDataFinal$weekDayCategory <- mapvalues(stepSummaryDataFinal$weekday, from=c("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"), to=c("Weekday","Weekday","Weekday","Weekday","Weekday","Weekend","Weekend"))
+ggplot(stepSummaryDataFinal, aes(date,steps.sum))+geom_line(color="aquamarine4")+facet_wrap(~weekDayCategory, nrow=2)
 ```
