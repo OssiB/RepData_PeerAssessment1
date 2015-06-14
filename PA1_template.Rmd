@@ -1,6 +1,7 @@
 ---
 title: "Peer assistment 1"
 output: html_document
+author: Ossi Bister
 ---
 ```{r}
 library("ggplot2")
@@ -26,6 +27,26 @@ Histogram of the total number of steps taken each day ignoring missing values
 stepSummaryData$date <- as.POSIXct(stepSummaryData$date)
  ggplot(data = stepSummaryData,aes(x=date,y=steps.sum))+geom_histogram(stat="identity")+scale_x_datetime(breaks = date_breaks("1 weeks"),                                                                                labels = date_format("%d/%m"))+ggtitle("Total number of steps by day\n at time period 01.10.2013-30.11.2013")
 ```
+Mean and median of the total number of steps taken per day
 
+```{r}
+meanSteps <- mean(stepSummaryData$steps.sum)
+meadianSteps <- median(stepSummaryData$steps.sum)
+```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Next we calculate average step count by interval
+```{r}
+stepIntervalMean <- summaryBy(steps~interval,data = activityDataCleaned,FUN = mean)
+```
+Because we need 5 minutes intervals we have first create vector
+```{r}
+fiveMinuteInterval <- seq(from = 0, to = 287*5, by = 5)
+```
+.. and attach the generated vector to *stepIntervalMean*
+```{r}
+stepIntervalMean$fiveMinutes <- fiveMinuteInterval
+```
+and finally plot the results
+```{r}
+ ggplot(data = stepIntervalMean,aes(x=fiveMinutes,y=steps.mean))+geom_line()
+```
