@@ -1,25 +1,31 @@
 ---
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
+title: "Peer assistment 1"
+output: html_document
 ---
+```{r}
+library("ggplot2")
+library("doBy")
+library("scales")
+```
+
+We read the data using *readCsv()* method and calculate the number of steps
+utlizing 
+*doBy* packages *summaryBy* method
+
+```{r}
+activityData <- read.csv("/Users/ossibister/Development/RepData_PeerAssessment1/activity.csv")
+activityDataCleaned <- na.omit(activityData)
+stepSummaryData <- summaryBy(steps~date,data = activityDataCleaned,FUN = sum)
+stepSummaryData$date = as.POSIXct(stepSummaryData$date)
+```
 
 
-## Loading and preprocessing the data
+Histogram of the total number of steps taken each day ignoring missing values
+
+```{r}
+stepSummaryData$date <- as.POSIXct(stepSummaryData$date)
+ ggplot(data = stepSummaryData,aes(x=date,y=steps.sum))+geom_histogram(stat="identity")+scale_x_datetime(breaks = date_breaks("1 weeks"),                                                                                labels = date_format("%d/%m"))+ggtitle("Total number of steps by day\n at time period 01.10.2013-30.11.2013")
+```
 
 
-
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
